@@ -47,7 +47,7 @@ export default function Landing({ go, theme, setTheme }: { go: (v: View) => void
       <Nav go={go} active="home" theme={theme} setTheme={setTheme} />
 
       <section className="lhero3">
-        <span className="lhero3-badge">● EarnKaro · Senior PM Assignment</span>
+        <span className="lhero3-badge">● EarnKaro · Product Assignment</span>
         <h1 className="lhero3-h">Built for every kind of <span className="accent">creator</span>.</h1>
         <p className="lhero3-p">Two interactive parts — segmentation &amp; personalization, and an Instagram creator suite. Pick a way in below; the written answers are in the footer.</p>
         <a className="lbtn p" href="#proto">Explore the prototypes ↓</a>

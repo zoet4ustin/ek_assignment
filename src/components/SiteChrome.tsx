@@ -24,8 +24,8 @@ export function Footer() {
     <footer className="lfoot">
       <div className="lfoot-l">
         <span className="lnav-logo">EARN<b>KARO</b></span>
-        <div className="lfoot-sub">Senior PM Assignment · June 2026 · prepared by Agniv</div>
-        <a className="lfoot-gh" href="https://github.com/zoet4ustin" target="_blank" rel="noopener noreferrer">↗ github.com/zoet4ustin</a>
+        <div className="lfoot-sub">Product assignment · June 2026 · prepared by Agniv</div>
+        <a className="lfoot-gh" href="https://github.com/zoet4ustin/ek_assignment" target="_blank" rel="noopener noreferrer">↗ github.com/zoet4ustin/ek_assignment</a>
       </div>
       <div className="lfoot-links">
         <div className="lfoot-ct">The written answers (PDF)</div>
@@ -34,7 +34,7 @@ export function Footer() {
         <a href="/answers/Combined.pdf" download="EarnKaro_PM_Assignment.pdf">Combined (Q1 + Q2)</a>
       </div>
       <div className="lfoot-r">
-        <div className="lfoot-note"><b>Independent candidate assignment.</b> Not affiliated with, endorsed by, or representing EarnKaro. Brand names, logos and screenshots are illustrative and used only to demonstrate the concept. Instagram is simulated in the prototypes; the flowcharts and feasibility reflect the real backend (Graph, Messaging &amp; Content Publishing APIs). The full answers are attached to the email — kept here for convenience.</div>
+        <div className="lfoot-note"><b>Independent candidate assignment.</b> Not affiliated with or endorsed by EarnKaro; brands, logos and screenshots are illustrative and Instagram is simulated.</div>
       </div>
     </footer>
   )

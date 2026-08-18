@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { CATEGORIES, CAT_BY_KEY, tileSrc } from '../data'
+import { useState, useEffect, useRef } from 'react'
+import { CATEGORIES, CAT_BY_KEY, tileSrc, DEALS as CATALOG } from '../data'
 
 // The eight tiles Aisha plausibly sees; the Q1 collage ships twelve, but the
 // Studio only needs enough to make the niche editable without stealing the
@@ -12,7 +12,8 @@ const SEED_NICHE = ['Fashion', 'Beauty', 'Accessories', 'Footwear']
 
 type Deal = 'beauty' | 'dress'
 type Path = 'without' | 'with'
-type Step = 'home' | 'suite' | 'identity' | 'path' | 'paywall' | 'payment' | 'gen' | 'preview' | 'posted' | 'insta' | 'dm' | 'store'
+type Step = 'niche' | 'suite' | 'home' | 'identity' | 'path' | 'paywall' | 'payment' | 'gen' | 'preview' | 'posted' | 'insta' | 'dm' | 'store'
+type Era = 'day1' | 'later'
 
 const DEALS: Record<Deal, any> = {
   beauty: {
@@ -29,6 +30,101 @@ const DEALS: Record<Deal, any> = {
   },
 }
 const ORDER: Deal[] = ['beauty', 'dress']
+
+/* ------------------------------------------------------------------ *
+ * Homepage content. Campaign-level offers ride the hero as a swipe
+ * stack; the long tail comes from the shared Q1 catalogue so the same
+ * niche filters both halves of the product.
+ * ------------------------------------------------------------------ */
+
+interface Offer { id: string; b: string; t: string; s: string; cat: string; g: string }
+
+const OFFERS: Offer[] = [
+  { id: 'nykaa', b: 'Nykaa', t: 'Beauty Bonanza', s: 'Up to 60% off · 18% profit', cat: 'Beauty', g: 'linear-gradient(135deg,#5A1A3C,#F5789B)' },
+  { id: 'myntra', b: 'Myntra', t: 'Fashion Week drops', s: 'New arrivals · 12% profit', cat: 'Fashion', g: 'linear-gradient(135deg,#3A1B4E,#C6479A)' },
+  { id: 'ajio', b: 'Ajio', t: 'Footwear Fest', s: 'Flat 50% · 10% profit', cat: 'Footwear', g: 'linear-gradient(135deg,#1B2432,#7FA8D6)' },
+  { id: 'amazon', b: 'Amazon', t: 'Home Upgrade Days', s: 'Up to 45% off · 11% profit', cat: 'Home', g: 'linear-gradient(135deg,#3A2417,#E2A45C)' },
+  { id: 'titan', b: 'Titan', t: 'Accessory Week', s: 'Up to 40% off · 13% profit', cat: 'Accessories', g: 'linear-gradient(135deg,#2E211A,#C9A279)' },
+]
+
+const STACK = [
+  { n: 'AI video tool', s: 'Creatify / HeyGen', p: '2,400' },
+  { n: 'AI voice', s: 'ElevenLabs', p: '1,900' },
+  { n: 'DM automation', s: 'ManyChat', p: '1,800' },
+  { n: 'Link-in-bio', s: 'Linktree Pro', p: '1,750' },
+]
+
+const EXPIRING = [
+  { b: 'Nykaa', n: 'Lip kit', pr: 18, mins: 18, cat: 'Beauty' },
+  { b: 'Myntra', n: 'Nike sneakers', pr: 8, mins: 124, cat: 'Footwear' },
+  { b: 'Ajio', n: "Levi's jeans", pr: 12, mins: 73, cat: 'Fashion' },
+  { b: 'Amazon', n: 'Bedsheet set', pr: 11, mins: 41, cat: 'Home' },
+]
+
+function mmss(ms: number): string {
+  if (ms < 0) ms = 0
+  const t = Math.floor(ms / 1000)
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60
+  const p = (n: number) => String(n).padStart(2, '0')
+  return (h ? h + ':' : '') + p(m) + ':' + p(sec)
+}
+
+/* Swipe stack. Left means "not for me" and damps that category in the
+ * same model the collage seeded, so the gesture feeds ranking instead
+ * of just hiding a card. Right opens the deal. Both are undoable. */
+function SwipeHero({ offers, onPass, onOpen }: {
+  offers: Offer[]; onPass: (o: Offer) => void; onOpen: (o: Offer) => void
+}) {
+  const [dx, setDx] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const startX = useRef(0)
+
+  if (!offers.length) return (
+    <div className="q2p-heroempty">
+      Nothing matches your niche right now.<br />Add a tile back in Creator Studio.
+    </div>
+  )
+
+  const top = offers[0]
+  const rest = offers.slice(1, 3)
+  const rot = dx / 22
+  const passing = dx < -70
+  const opening = dx > 70
+
+  const end = () => {
+    if (dx < -70) onPass(top)
+    else if (dx > 70) onOpen(top)
+    setDx(0); setDragging(false)
+  }
+
+  return (
+    <div className="q2p-swipe">
+      {rest.slice().reverse().map((o, i) => (
+        <div key={o.id} className="q2p-scard back" style={{
+          background: o.g,
+          transform: `translateY(${(rest.length - i) * 7}px) scale(${1 - (rest.length - i) * 0.045})`,
+        }} />
+      ))}
+      <div
+        className={'q2p-scard top' + (dragging ? ' dragging' : '')}
+        style={{ background: top.g, transform: `translateX(${dx}px) rotate(${rot}deg)` }}
+        onPointerDown={e => { setDragging(true); startX.current = e.clientX; e.currentTarget.setPointerCapture(e.pointerId) }}
+        onPointerMove={e => { if (dragging) setDx(e.clientX - startX.current) }}
+        onPointerUp={end}
+        onPointerCancel={end}
+      >
+        <span className={'q2p-sstamp pass' + (passing ? ' on' : '')}>NOT FOR ME</span>
+        <span className={'q2p-sstamp open' + (opening ? ' on' : '')}>OPEN</span>
+        <span className="q2p-sbrand">{top.b}</span>
+        <div className="q2p-sbody">
+          <div className="q2p-st">{top.t}</div>
+          <div className="q2p-ss">{top.s}</div>
+        </div>
+      </div>
+      <div className="q2p-shint">← not for me · swipe · open →</div>
+    </div>
+  )
+}
 
 function classify(text: string): { intent: string; reply: string } | null {
   const t = text.toLowerCase()
@@ -129,10 +225,10 @@ function ArchOverlay({ close }: { close: () => void }) {
 }
 
 const JUMP: { s: Step; l: string }[] = [
-  { s: 'home', l: 'Q1 home' }, { s: 'suite', l: 'Creator Studio' }, { s: 'identity', l: 'Identity' },
-  { s: 'path', l: 'Path' }, { s: 'paywall', l: 'Paywall' }, { s: 'gen', l: 'AI pipeline' },
-  { s: 'preview', l: 'Reel preview' }, { s: 'insta', l: 'IG profile' }, { s: 'dm', l: 'Comment → DM' },
-  { s: 'store', l: 'Storefront' },
+  { s: 'niche', l: 'Niche' }, { s: 'suite', l: 'Why Creator Studio' }, { s: 'home', l: 'Homepage' },
+  { s: 'identity', l: 'Identity' }, { s: 'path', l: 'Path' }, { s: 'paywall', l: 'Plans' },
+  { s: 'gen', l: 'AI pipeline' }, { s: 'preview', l: 'Reel preview' }, { s: 'insta', l: 'IG profile' },
+  { s: 'dm', l: 'Comment → DM' }, { s: 'store', l: 'Storefront' },
 ]
 
 const PNS: { icon: string; title: string; body: string; tag: string }[] = [
@@ -165,7 +261,7 @@ function InfoOverlay({ title, kicker, close, children }: { title: string; kicker
 }
 
 export default function Q2Flow() {
-  const [step, setStep] = useState<Step>('home')
+  const [step, setStep] = useState<Step>('niche')
   const [deal, setDeal] = useState<Deal>('beauty')
   const [path, setPath] = useState<Path>('with')
   const [idSet, setIdSet] = useState(false)
@@ -177,19 +273,60 @@ export default function Q2Flow() {
   // Carried over from the Q1 cold start, not invented here. Editing it
   // re-ranks the Studio, so the two answers are visibly the same system.
   const [niche, setNiche] = useState<string[]>(SEED_NICHE)
+  // Swipes damp a category rather than deleting inventory: twelve deals
+  // is thin supply, and a dismissal you cannot undo is a data loss.
+  const [damp, setDamp] = useState<Record<string, number>>({})
+  const [passed, setPassed] = useState<string[]>([])
+  const [undo, setUndo] = useState<{ id: string; cat: string } | null>(null)
+  const [era, setEra] = useState<Era>('day1')
+  const [now, setNow] = useState(() => Date.now())
   const go = (s: Step) => { setStep(s); setDm(null); setMiss(false) }
 
   const toggleNiche = (k: string) =>
     setNiche(n => n.includes(k) ? n.filter(x => x !== k) : [...n, k])
 
-  // Followed category first, then the original order as the tiebreak.
-  const ordered = [...ORDER].sort((a, b) =>
-    (niche.includes(DEALS[b].cat) ? 1 : 0) - (niche.includes(DEALS[a].cat) ? 1 : 0))
+  const weight = (cat: string) =>
+    (niche.includes(cat) ? 2 : 0) - (damp[cat] || 0) * 1.5
+
+  const passOffer = (o: Offer) => {
+    setPassed(p => [...p, o.id])
+    setDamp(d => ({ ...d, [o.cat]: (d[o.cat] || 0) + 1 }))
+    setUndo({ id: o.id, cat: o.cat })
+  }
+  const undoPass = () => {
+    if (!undo) return
+    setPassed(p => p.filter(x => x !== undo.id))
+    setDamp(d => ({ ...d, [undo.cat]: Math.max(0, (d[undo.cat] || 0) - 1) }))
+    setUndo(null)
+  }
+
+  const heroOffers = OFFERS
+    .filter(o => !passed.includes(o.id))
+    .sort((a, b) => weight(b.cat) - weight(a.cat))
+
+  // The two video-backed deals — the only ones the Reel Maker can run on.
+  const ordered = [...ORDER].sort((a, b) => weight(DEALS[b].cat) - weight(DEALS[a].cat))
+
+  // Long tail from the shared Q1 catalogue, same niche doing the same job.
+  const more = CATALOG
+    .filter(c => niche.includes(c.c) && !(damp[c.c] > 0))
+    .sort((a, b) => weight(b.c) - weight(a.c))
+    .slice(0, 4)
+
+  const expiring = EXPIRING.map((e, i) => ({ ...e, i })).filter(e => weight(e.cat) > -1)
+  const endsAt = useRef(EXPIRING.map(e => Date.now() + e.mins * 60000))
+  const earnings = era === 'day1' ? '0' : '5,000'
 
   const d = DEALS[deal]
   const vid = path === 'without' ? d.without : d.with
 
   useEffect(() => { if (step === 'gen') { const t = setTimeout(() => setStep('preview'), 2800); return () => clearTimeout(t) } }, [step])
+  useEffect(() => {
+    if (step !== 'home') return
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [step])
+  useEffect(() => { if (!undo) return; const t = setTimeout(() => setUndo(null), 3200); return () => clearTimeout(t) }, [undo])
 
   const send = (text: string) => {
     setComment('')
@@ -204,18 +341,19 @@ export default function Q2Flow() {
   }
 
   const guide: Record<Step, { h: string; p: string; flow: any }> = {
-    home: { h: '1 · Discovery — where it begins', p: "Aisha's home, exactly as the Q1 cold start left it: inferred Influencer, ranking on the tiles she followed. Q2 starts from that state rather than assuming it. The question Q2 must answer is how she finds the creator tools at all. Answer — we nudge, and the nudge is earned: she told us Instagram at signup. Tap the glowing banner.", flow: <Flow title="How we nudge (entry points)" nodes={[{ t: 'Q1 signal: channel = Instagram', sub: 'from the audience step', hl: true }, { t: 'Home banner — personalized' }, { t: 'Hamburger menu entry' }, { t: 'Nudge after she shares a deal' }]} /> },
-    suite: { h: '2 · Creator Studio', p: 'One niche, two sources. The tiles she followed in Q1 seed it on day one, before any Instagram connection exists; her own posts and hashtags then refine it via the Graph API, and conversion data re-ranks it. She can edit the tiles right here, and the deal list below re-ranks as she does — the same collage, doing the same job, in the other half of the product. It collapses discovery for the Influencer: the on-brand deals come to her.', flow: <Flow title="Where the niche comes from" nodes={[{ t: 'Followed tiles from Q1', sub: 'day-one seed, no data needed', hl: true }, { t: 'Her posts + hashtags', sub: 'Graph API · consented' }, { t: 'Rank by what converts' }, { t: 'Editable here — explicit wins' }]} /> },
-    identity: { h: '3 · Set up your look (once)', p: 'This is where Aisha uploads her photo and records her voice — done once, reused on every "with you" reel. Decoupled from creation so making a reel is never slowed down. Consent is explicit (DPDP).', flow: <Flow title="Identity" nodes={[{ t: 'Upload photo' }, { t: 'Record 30s voice' }, { t: 'Consent + stored securely', hl: true }, { t: 'Reused on every reel' }]} /> },
-    path: { h: '4 · With you, or product-only', p: 'Product-only is free. "With you" uses your saved look + voice — that\'s the Pro feature, because cloning is what costs us. The Nykaa + with-you reel is the showcase.', flow: <Flow title="Gating" nodes={[{ t: 'Without you — free' }, { t: 'With you — Pro', hl: true }]} /> },
-    paywall: { h: '5 · Freemium → Pro', p: 'Free maximises GMV (commission pays for it); Pro covers the heavy compute. Cloned look, unlimited reels, intent Auto DM, premium storefront.', flow: <Flow title="Why a paywall here" nodes={[{ t: 'Templated reel ≈ ₹7' }, { t: 'Clone/generative ≫', warn: true }, { t: 'Pro ₹599 / credits', hl: true }]} /> },
-    payment: { h: '6 · Checkout (demo)', p: 'A mock checkout — no real payment. UPI-first for India, cards as fallback.', flow: <Flow title="Billing" nodes={[{ t: 'UPI / cards' }, { t: 'Subscription ₹599/mo', hl: true }, { t: 'Cancel anytime' }]} /> },
-    gen: { h: '7 · What EarnKaro does', p: 'The AI pipeline, grounded in the real deal so it never invents the product. Tap "See the architecture" for the full picture.', flow: <Flow title="Reel Maker pipeline" nodes={[{ t: 'Real PDP images + deal data', sub: 'never hallucinated' }, { t: 'LLM writes the script' }, { t: 'ElevenLabs voiceover' }, { t: 'Assemble 9:16 + captions', hl: true }]} /> },
-    preview: { h: '8 · The finished Reel', p: 'Your generated video — tap the speaker for the voiceover. Caption is pre-written with the keyword. Post auto-publishes (Business) or exports (Creator).', flow: <Flow title="On post" nodes={[{ t: 'Bind tracked profit link' }, { t: 'Arm Auto DM on this post', hl: true }, { t: 'Publish / export' }]} /> },
-    posted: { h: '9 · The native loop', p: 'Making the Reel set up the whole funnel — no second tool. The Auto DM is live and bound to this exact deal.', flow: <Flow title="Wired together" nodes={[{ t: 'Reel posted' }, { t: 'Auto DM armed', hl: true }, { t: 'Storefront updated' }]} /> },
-    insta: { h: '10 · On Instagram (simulated)', p: 'A faithful mock — production uses the Graph + Content Publishing APIs. Tap the new reel to see the comment→DM loop.', flow: <Flow title="Real backend" nodes={[{ t: 'Content Publishing API' }, { t: 'Comment webhooks' }, { t: 'Messaging API', hl: true }]} /> },
-    dm: { h: '11 · Comment → DM', p: 'Type any comment or tap a chip. We read intent — not just the keyword — and only DM on real buying intent. "nice!" gets nothing: we don\'t spam.', flow: <Flow title="Auto DM" nodes={[{ t: 'Comment' }, { t: 'LLM intent classify', hl: true }, { t: 'Buying intent → DM' }, { t: 'No intent → nothing', warn: true }]} /> },
-    store: { h: '12 · Link-in-bio Storefront', p: 'One link in her bio. EarnKaro auto-prunes expired deals and refreshes price/stock — a bio link that never goes dead.', flow: <Flow title="Live sync" nodes={[{ t: 'Curation + catalog' }, { t: 'Prune expired · refresh price', hl: true }, { t: 'Hosted page → tracked links' }]} /> },
+    niche: { h: '1 · Profile her, before profiling anything else', p: "Q2 opens where Q1's cold start ended, and it opens with the question rather than the catalogue. Nothing is recommended until she has said what her audience buys — a deal list rendered before the input would be a list she had no part in. Her signup picks are pre-filled; adjust them and everything downstream re-ranks.", flow: <Flow title="Why the question comes first" nodes={[{ t: 'Audience + followed tiles', sub: 'from the Q1 cold start', hl: true }, { t: 'Niche model' }, { t: 'Only then: offers, deals, reels' }, { t: 'Swipes refine it from here on' }]} /> },
+    suite: { h: '2 · Why Creator Studio at all', p: 'Before what it does, why it exists. She can already do this with four separate tools — Creatify for video, ElevenLabs for voice, ManyChat for DMs, Linktree for the bio link — for about ₹7,850 a month, four logins, and links she pastes by hand. Creator Studio is one tool at ₹599 with the links already tracked. Then the two doors: start free, or see Pro. Nobody is asked to pay before making anything.', flow: <Flow title="The buying decision" nodes={[{ t: 'Four tools ≈ ₹7,850/mo', sub: 'and manual link pasting', warn: true }, { t: 'One tool ≈ ₹599/mo', hl: true }, { t: 'Free tier stays useful' }, { t: 'Pay at the clone, not at the door' }]} /> },
+    home: { h: '3 · Her homepage', p: "Now the catalogue, and only now. Earnings sit top right — ₹0 on day one, because she has not earned anything yet; flip the era toggle to see the same screen two weeks in. The hero is a swipe stack: left is “not for me” and damps that category in the same model the collage seeded, so browsing keeps teaching the profile. Expiring deals, her niche feed, and storefront status sit below; the free-plan bar is pinned.", flow: <Flow title="Homepage signals" nodes={[{ t: 'Stated: followed tiles' }, { t: 'Behavioural: swipe left/right', hl: true }, { t: 'Blend → rank offers + feed' }, { t: 'Reel Maker entry on each deal' }]} /> },
+    identity: { h: '4 · Set up your look (once)', p: 'This is where Aisha uploads her photo and records her voice — done once, reused on every "with you" reel. Decoupled from creation so making a reel is never slowed down. Consent is explicit (DPDP).', flow: <Flow title="Identity" nodes={[{ t: 'Upload photo' }, { t: 'Record 30s voice' }, { t: 'Consent + stored securely', hl: true }, { t: 'Reused on every reel' }]} /> },
+    path: { h: '5 · With you, or product-only', p: 'Product-only is free. "With you" uses your saved look + voice — that\'s the Pro feature, because cloning is what costs us. The Nykaa + with-you reel is the showcase.', flow: <Flow title="Gating" nodes={[{ t: 'Without you — free' }, { t: 'With you — Pro', hl: true }]} /> },
+    paywall: { h: '6 · Freemium → Pro', p: 'Free maximises GMV (commission pays for it); Pro covers the heavy compute. Cloned look, unlimited reels, intent Auto DM, premium storefront.', flow: <Flow title="Why a paywall here" nodes={[{ t: 'Templated reel ≈ ₹7' }, { t: 'Clone/generative ≫', warn: true }, { t: 'Pro ₹599 / credits', hl: true }]} /> },
+    payment: { h: '7 · Checkout (demo)', p: 'A mock checkout — no real payment. UPI-first for India, cards as fallback.', flow: <Flow title="Billing" nodes={[{ t: 'UPI / cards' }, { t: 'Subscription ₹599/mo', hl: true }, { t: 'Cancel anytime' }]} /> },
+    gen: { h: '8 · What EarnKaro does', p: 'The AI pipeline, grounded in the real deal so it never invents the product. Tap "See the architecture" for the full picture.', flow: <Flow title="Reel Maker pipeline" nodes={[{ t: 'Real PDP images + deal data', sub: 'never hallucinated' }, { t: 'LLM writes the script' }, { t: 'ElevenLabs voiceover' }, { t: 'Assemble 9:16 + captions', hl: true }]} /> },
+    preview: { h: '9 · The finished Reel', p: 'Your generated video — tap the speaker for the voiceover. Caption is pre-written with the keyword. Post auto-publishes (Business) or exports (Creator).', flow: <Flow title="On post" nodes={[{ t: 'Bind tracked profit link' }, { t: 'Arm Auto DM on this post', hl: true }, { t: 'Publish / export' }]} /> },
+    posted: { h: '10 · The native loop', p: 'Making the Reel set up the whole funnel — no second tool. The Auto DM is live and bound to this exact deal.', flow: <Flow title="Wired together" nodes={[{ t: 'Reel posted' }, { t: 'Auto DM armed', hl: true }, { t: 'Storefront updated' }]} /> },
+    insta: { h: '11 · On Instagram (simulated)', p: 'A faithful mock — production uses the Graph + Content Publishing APIs. Tap the new reel to see the comment→DM loop.', flow: <Flow title="Real backend" nodes={[{ t: 'Content Publishing API' }, { t: 'Comment webhooks' }, { t: 'Messaging API', hl: true }]} /> },
+    dm: { h: '12 · Comment → DM', p: 'Type any comment or tap a chip. We read intent — not just the keyword — and only DM on real buying intent. "nice!" gets nothing: we don\'t spam.', flow: <Flow title="Auto DM" nodes={[{ t: 'Comment' }, { t: 'LLM intent classify', hl: true }, { t: 'Buying intent → DM' }, { t: 'No intent → nothing', warn: true }]} /> },
+    store: { h: '13 · Link-in-bio Storefront', p: 'One link in her bio. EarnKaro auto-prunes expired deals and refreshes price/stock — a bio link that never goes dead.', flow: <Flow title="Live sync" nodes={[{ t: 'Curation + catalog' }, { t: 'Prune expired · refresh price', hl: true }, { t: 'Hosted page → tracked links' }]} /> },
   }
   const g = guide[step]
 
@@ -224,102 +362,176 @@ export default function Q2Flow() {
   )
 
   function screen() {
-    if (step === 'home') return (
-      <>
-        <div className="q2p-hd"><span style={{ fontSize: 15 }}>☰</span><span style={{ fontWeight: 800 }}>EARN<b>KARO</b></span><span style={{ fontSize: 13, color: '#9DB0AD' }}>⌕</span></div>
+    if (step === 'niche') return (
+      <><TopBar t="Step 1 of 3" />
         <div className="q2p-bd">
-          <div className="q2p-greet"><img src="/avatar/profile.png" className="q2p-av" /><div style={{ flex: 1 }}><div style={{ fontSize: 10, color: '#9DB0AD' }}>Welcome back</div><div style={{ fontWeight: 800 }}>Hi Aisha</div></div><div className="q2p-month"><div style={{ fontSize: 9, color: '#9DB0AD' }}>This month</div><b>₹12,400</b></div></div>
-          <div className="q2p-curated">
-            <div className="q2p-curatedh">
-              <span>Curated for · <b>Influencer</b></span>
-              <span className="q2p-curatede" onClick={() => setStep('suite')}>Edit</span>
-            </div>
-            <div className="q2p-curateds">
-              Ranking on {niche.slice(0, 3).map(k => CAT_BY_KEY[k]?.label || k).join(', ')}
-              {niche.length > 3 ? ` +${niche.length - 3} more` : ''}
-            </div>
+          <div className="q2p-steps"><i className="on" /><i /><i /></div>
+          <div className="q2p-h">What does your audience buy?</div>
+          <div className="q2p-od">
+            Carried over from your EarnKaro signup — adjust it and everything after this re-ranks.
+            Nothing gets recommended until you answer.
           </div>
-          <div className="q2p-hero">Fashion Week drops · 12% profit</div>
-          <div className="q2p-tilerail">
-            <div className="q2p-tr all"><span className="q2p-trall">All</span><i>All</i></div>
-            {niche.map(k => {
-              const c = CAT_BY_KEY[k]
-              if (!c) return null
+          <div className="q2p-nichegrid big">
+            {CATEGORIES.map(c => {
+              const on = niche.includes(c.key)
               return (
-                <div className="q2p-tr" key={k}>
-                  <img src={tileSrc(c.tile)} alt="" width={42} height={42} />
+                <button key={c.key} className={'q2p-nt' + (on ? ' on' : '')}
+                  onClick={() => toggleNiche(c.key)} aria-pressed={on}>
+                  <img src={tileSrc(c.tile)} alt="" width={62} height={62} />
                   <i>{c.label}</i>
-                </div>
+                  {on && <span className="q2p-ntick">✓</span>}
+                </button>
               )
             })}
           </div>
-          <div className="q2p-coach">
-            <div className="q2p-nudge ring" onClick={() => setStep('suite')}>
-              <div style={{ fontSize: 22 }}>✨</div>
-              <div style={{ flex: 1 }}><div style={{ fontWeight: 800, fontSize: 13 }}>New · Creator Studio</div><div className="q2p-od">Turn these deals into Instagram Reels — made for you.</div></div>
-              <div className="q2p-make">Open →</div>
-            </div>
-            <div className="q2p-coachlbl">↑ tap to open · we surfaced this because you post to Instagram</div>
+          <div className={'q2p-btn' + (niche.length < 3 ? ' off' : '')}
+            onClick={() => { if (niche.length >= 3) setStep('suite') }}>
+            {niche.length < 3 ? `Follow ${3 - niche.length} more` : `Continue with ${niche.length} →`}
           </div>
-          <div className="q2p-h" style={{ fontSize: 14 }}>For you</div>
-          {ordered.map(k => (
-            <div key={k} className="q2p-deal" onClick={() => setStep('suite')}>
-              <div className="q2p-dthumb">{DEALS[k].emoji}</div>
-              <div style={{ flex: 1 }}><div className="q2p-dn">{DEALS[k].brand} · {DEALS[k].name}</div><div className="q2p-dmeta">₹{DEALS[k].price} <s>₹{DEALS[k].mrp}</s> · {DEALS[k].pr}%</div></div>
-            </div>
-          ))}
         </div>
       </>
     )
+
     if (step === 'suite') return (
-      <><TopBar t="Creator Studio" back={() => setStep('home')} />
+      <><TopBar t="Creator Studio" back={() => setStep('niche')} />
         <div className="q2p-bd">
+          <div className="q2p-steps"><i className="on" /><i className="on" /><i /></div>
           <div className="q2p-h">Creator Studio ✨</div>
-          <div className="q2p-recobanner">
-            <div className="q2p-recohd">
-              <span>● Your niche</span>
-              <span className="q2p-recotag">{niche.length} followed</span>
+          <div className="q2p-od">
+            A deal becomes a posted Reel with the funnel already armed. One tool, not four.
+          </div>
+
+          <div className="q2p-sech">Why this, and not four tools</div>
+          <div className="q2p-vs">
+            <div className="q2p-vscol diy">
+              <div className="q2p-vsk">Doing it yourself</div>
+              {STACK.map(x => (
+                <div className="q2p-vsrow" key={x.n}>
+                  <span>{x.n}<em>{x.s}</em></span><b>₹{x.p}</b>
+                </div>
+              ))}
+              <div className="q2p-bar"><i className="diy" style={{ width: '100%' }} /></div>
+              <div className="q2p-vstot">₹7,850<em>/mo · 4 logins · links pasted by hand</em></div>
             </div>
-            <div className="q2p-recowhy2">
-              Seeded by what you followed at signup, refined by what you actually post
-              (<b>Graph API</b>, consented). Tap to adjust — the picks below re-rank.
-            </div>
-            <div className="q2p-nichegrid">
-              {NICHE_TILES.map(c => {
-                const on = niche.includes(c.key)
-                return (
-                  <button key={c.key} className={'q2p-nt' + (on ? ' on' : '')}
-                    onClick={() => toggleNiche(c.key)} aria-pressed={on}>
-                    <img src={tileSrc(c.tile)} alt="" width={46} height={46} />
-                    <i>{c.label}</i>
-                    {on && <span className="q2p-ntick">✓</span>}
-                  </button>
-                )
-              })}
+            <div className="q2p-vscol ek">
+              <div className="q2p-vsk">Creator Pro</div>
+              <div className="q2p-vsrow"><span>All four<em>in EarnKaro</em></span><b>✓</b></div>
+              <div className="q2p-vsrow"><span>Links pre-tracked<em>no pasting</em></span><b>✓</b></div>
+              <div className="q2p-vsrow"><span>You in the Reel<em>voice + face</em></span><b>✓</b></div>
+              <div className="q2p-bar"><i className="ek" style={{ width: '7.6%' }} /></div>
+              <div className="q2p-vstot">₹599<em>/mo · one login · 92% less</em></div>
             </div>
           </div>
+
+          <div className="q2p-sech">What you get</div>
+          <div className="q2p-toolg">
+            <div className="q2p-toolc t1"><span>🎬</span><b>Reel Maker</b><i>deal → Reel in ~40s</i></div>
+            <div className="q2p-toolc t2"><span>💬</span><b>Auto DM</b><i>comments → tracked link</i></div>
+            <div className="q2p-toolc t3"><span>🛍</span><b>Storefront</b><i>one bio link, never dead</i></div>
+          </div>
+
+          <div className="q2p-btn" onClick={() => setStep('home')}>Start free →</div>
+          <div className="q2p-btn ghost" onClick={() => setStep('paywall')}>See Pro · ₹599/mo</div>
+          <div className="q2p-od" style={{ textAlign: 'center' }}>
+            Free forever: 2 Reels a month, product-only, keyword Auto DM. No card needed.
+          </div>
+        </div>
+      </>
+    )
+
+    if (step === 'home') return (
+      <>
+        <div className="q2p-hd home">
+          <span className="q2p-hdl"><i>☰</i><em>EARN<b>KARO</b></em></span>
+          <span className="q2p-earn"><em>Total earnings</em><b>₹{earnings}</b></span>
+        </div>
+        <div className="q2p-bd">
+          <div className="q2p-erarow">
+            <span>Demo:</span>
+            <button className={era === 'day1' ? 'on' : ''} onClick={() => setEra('day1')}>Day 1</button>
+            <button className={era === 'later' ? 'on' : ''} onClick={() => setEra('later')}>2 weeks later</button>
+          </div>
+          <div className={'q2p-firstnudge' + (era === 'later' ? ' good' : '')}>
+            {era === 'day1'
+              ? 'Your first ₹100 is the hardest. One Reel usually does it.'
+              : '3 Reels posted · 1,840 clicks · next payout Fri'}
+          </div>
+
+          <SwipeHero
+            offers={heroOffers}
+            onPass={passOffer}
+            onOpen={o => { setDeal(o.cat === 'Beauty' ? 'beauty' : 'dress'); setStep('path') }}
+          />
+          {undo && (
+            <div className="q2p-undo">
+              Fewer <b>{undo.cat}</b> offers from now on
+              <span onClick={undoPass}>Undo</span>
+            </div>
+          )}
+
+          <div className="q2p-sech">Expiring soon</div>
+          <div className="q2p-expstrip">
+            {expiring.map(e => (
+              <div className="q2p-exp" key={e.n}>
+                <div className="q2p-expt">⏱ {mmss(endsAt.current[e.i] - now)}</div>
+                <div className="q2p-dn" style={{ fontSize: 11.5 }}>{e.b}</div>
+                <div className="q2p-dmeta">{e.n} · {e.pr}%</div>
+              </div>
+            ))}
+          </div>
+
+          <div className="q2p-sech">
+            For you · {niche.slice(0, 3).map(k => CAT_BY_KEY[k]?.label || k).join(', ')}
+            {niche.length > 3 ? ` +${niche.length - 3}` : ''}
+          </div>
           {ordered.map((k, i) => (
-            <div key={k} className={'q2p-deal' + (i === 0 ? ' feat' : '')} onClick={() => { setDeal(k); setStep('path') }}>
+            <div key={k} className={'q2p-deal' + (i === 0 ? ' feat' : '')}
+              onClick={() => { setDeal(k); setStep('path') }}>
               <div className="q2p-dthumb">{DEALS[k].emoji}</div>
-              <div style={{ flex: 1 }}><div className="q2p-dn">{DEALS[k].brand} · {DEALS[k].name}{i === 0 && <span className="q2p-freeb">TOP MATCH</span>}</div><div className="q2p-dmeta">₹{DEALS[k].price} <s>₹{DEALS[k].mrp}</s> · {DEALS[k].pr}%</div></div>
+              <div style={{ flex: 1 }}>
+                <div className="q2p-dn">{DEALS[k].brand} · {DEALS[k].name}
+                  {i === 0 && <span className="q2p-freeb">TOP MATCH</span>}</div>
+                <div className="q2p-dmeta">₹{DEALS[k].price} <s>₹{DEALS[k].mrp}</s> · {DEALS[k].pr}%</div>
+              </div>
               <div className="q2p-make">Make a Reel →</div>
             </div>
           ))}
-          <div className="q2p-sech">In the suite</div>
-          <div className="q2p-toolg">
-            <div className="q2p-toolc t1"><span>🎬</span><b>Reel Maker</b><i>deal → Reel</i></div>
-            <div className="q2p-toolc t2"><span>💬</span><b>Auto DM</b><i>comments → link</i></div>
-            <div className="q2p-toolc t3"><span>🛍</span><b>Storefront</b><i>one bio link</i></div>
-          </div>
+          {more.map(c => (
+            <div key={c.n} className="q2p-deal plain">
+              <div className="q2p-dthumb sm"><img src={tileSrc(CAT_BY_KEY[c.c]?.tile || 'fashion')} alt="" width={30} height={30} /></div>
+              <div style={{ flex: 1 }}>
+                <div className="q2p-dn">{c.b} · {c.n}</div>
+                <div className="q2p-dmeta">₹{c.p} <s>₹{c.m}</s> · {c.pr}%</div>
+              </div>
+              <div className="q2p-make dim">Share</div>
+            </div>
+          ))}
+
           <div className={'q2p-idcard' + (idSet ? ' done' : '')} onClick={() => setStep('identity')}>
             <img src="/avatar/profile.png" className="q2p-av" />
-            <div style={{ flex: 1 }}><div style={{ fontWeight: 700, fontSize: 12.5 }}>{idSet ? 'Your look is set up ✓' : 'Set up your look & voice'}</div><div className="q2p-od">{idSet ? 'used on every "with you" reel' : 'once · for "with you" reels'}</div></div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 12.5 }}>{idSet ? 'Your look is set up ✓' : 'Set up your look & voice'}</div>
+              <div className="q2p-od">{idSet ? 'used on every "with you" Reel' : 'once · for "with you" Reels'}</div>
+            </div>
             <div className="q2p-make">{idSet ? 'Edit' : 'Set up →'}</div>
           </div>
-          <div className="q2p-free">Free plan · <b>2 reels left</b> <span className="q2p-up" onClick={() => setStep('paywall')}>Go Pro</span></div>
+
+          <div className="q2p-storecard" onClick={() => setStep('store')}>
+            <span className="q2p-storeic">🛍</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 700, fontSize: 12.5 }}>Your bio link is live</div>
+              <div className="q2p-od">{era === 'day1' ? '2 deals · auto-pruned' : '5 deals · refreshed 2h ago'}</div>
+            </div>
+            <div className="q2p-make">View →</div>
+          </div>
+        </div>
+        <div className="q2p-freebar">
+          <span>Free plan · <b>{era === 'day1' ? 2 : 1} Reels left</b> this month</span>
+          <span className="q2p-up" onClick={() => setStep('paywall')}>Go Pro</span>
         </div>
       </>
     )
+
     if (step === 'identity') return (
       <><TopBar t="Your look & voice" back={() => setStep('suite')} />
         <div className="q2p-bd">
@@ -342,7 +554,7 @@ export default function Q2Flow() {
       </>
     )
     if (step === 'paywall') return (
-      <><TopBar t="Creator Pro" back={() => setStep('path')} />
+      <><TopBar t="Creator Pro" back={() => setStep(idSet ? 'path' : 'suite')} />
         <div className="q2p-bd">
           <div className="q2p-h" style={{ textAlign: 'center' }}>Go Creator Pro</div>
           <div className="q2p-savebanner">Save ~92% vs Creatify + ManyChat + Linktree</div>
@@ -351,7 +563,8 @@ export default function Q2Flow() {
             <div className="q2p-plan on"><span className="q2p-popular">POPULAR</span><div className="q2p-pn">Pro</div><div className="q2p-pp">₹599<span>/mo</span></div><ul><li>Unlimited reels</li><li>You in the reel (clone)</li><li>Intent Auto DM</li><li>Premium storefront</li></ul></div>
           </div>
           <div className="q2p-btn" onClick={() => setStep('payment')}>Continue to checkout</div>
-          <div className="q2p-od" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => { setPath('without'); setStep('gen') }}>Make a free product-only reel instead</div>
+          <div className="q2p-od" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setStep('home')}>Not now — stay on the free plan</div>
+          <div className="q2p-od" style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => { setPath('without'); setStep('gen') }}>Or make a free product-only Reel</div>
         </div>
       </>
     )
@@ -448,7 +661,7 @@ export default function Q2Flow() {
     )
   }
 
-  const order: Step[] = ['home', 'suite', 'identity', 'path', 'paywall', 'payment', 'gen', 'preview', 'posted', 'insta', 'dm', 'store']
+  const order: Step[] = ['niche', 'suite', 'home', 'identity', 'path', 'paywall', 'payment', 'gen', 'preview', 'posted', 'insta', 'dm', 'store']
   const idx = Math.max(0, order.indexOf(step))
 
   return (
@@ -497,7 +710,7 @@ export default function Q2Flow() {
           <button onClick={() => setInfo('pn')}>📲 Nudges we'd send</button>
           <button onClick={() => setInfo('edge')}>⚠ Edge cases</button>
         </div>
-        <button className="q2f-restart" onClick={() => { setStep('home'); setDm(null); setMiss(false); setIdSet(false); setDeal('beauty'); setPath('with') }}>↺ Restart the flow</button>
+        <button className="q2f-restart" onClick={() => { setStep('niche'); setDm(null); setMiss(false); setIdSet(false); setDeal('beauty'); setPath('with'); setNiche(SEED_NICHE); setDamp({}); setPassed([]); setUndo(null); setEra('day1') }}>↺ Restart the flow</button>
         <div className="q2f-note">Instagram is simulated for the demo; the flowcharts show the real backend (Graph API, Messaging API, Content Publishing API).</div>
       </aside>
       <div className="q2f-stage"><div className="q2f-phone"><div className="q2f-notch" /><div className="q2screen" key={step}>{screen()}</div></div></div>

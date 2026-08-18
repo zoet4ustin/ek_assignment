@@ -1,6 +1,6 @@
 # ek_assignment
 
-Interactive companion site for a Senior PM assignment (EarnKaro). Static Vite + React app, no backend, no database, no auth, no user data collected.
+Interactive companion site for a product assignment (EarnKaro). Static Vite + React app, no backend, no database, no auth, no user data collected.
 
 **Independent candidate assignment. Not affiliated with EarnKaro. Brand names and screenshots are illustrative; the Instagram surface is simulated.**
 
