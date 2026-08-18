@@ -34,7 +34,7 @@ export function Footer() {
         <a href="/answers/Combined.pdf" download="EarnKaro_PM_Assignment.pdf">Combined (Q1 + Q2)</a>
       </div>
       <div className="lfoot-r">
-        <div className="lfoot-note"><b>Independent candidate assignment.</b> Not affiliated with or endorsed by EarnKaro; brands, logos and screenshots are illustrative and Instagram is simulated.</div>
+        <div className="lfoot-note"><b>Independent candidate assignment.</b> Not affiliated with or endorsed by EarnKaro. Brands, logos and screenshots are illustrative, and Instagram is simulated.</div>
       </div>
     </footer>
   )
