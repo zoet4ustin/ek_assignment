@@ -2,7 +2,8 @@ import { useApp } from '../AppContext'
 
 const STEPS: [string, string][] = [
   ['One app, five creators', 'The same EarnKaro adapts to who you are — no labels, no “modes”. The redesign is invisible personalization.'],
-  ['Pick a cohort', 'Use “Viewing as” on the side panel to become a Homemaker, Influencer, Broadcaster, Casual sharer or Power affiliate — and watch the home feed, tools and default share target change.'],
+  ['Start with the cold start', 'Two questions — where you share and who sees it — then follow a few category tiles. The app infers your segment from those answers, shows you the scores it used, and lets you override it. That is the first screen you will land on.'],
+  ['Or pick a cohort directly', 'Use “Viewing as” on the side panel to jump straight to a Homemaker, Influencer, Broadcaster, Casual sharer or Power affiliate — and watch the home feed, tools and default share target change.'],
   ['See the logic', 'Turn on “Show personalization notes”, then tap the ⓘ markers to read why each section appears and which segments it serves.'],
   ['Try the flows', 'Tap Share & earn, the + (make link), the flash deals, and the goal / story / dashboard tools. Toggle light & dark too.'],
 ]

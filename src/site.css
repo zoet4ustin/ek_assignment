@@ -429,3 +429,18 @@
   .site-theme button span{display:none}
   .site-theme button{padding:8px 9px}
 }
+
+/* ============================================================
+   Creator journey strip — how the cold start works, on the site
+   ============================================================ */
+.ljour-wrap{max-width:1180px;margin:0 auto;padding:64px 22px 8px}
+.ljour-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:26px}
+.ljour{position:relative;padding:22px 20px 24px;border-radius:22px;border:1px solid var(--sln);background:var(--scard);box-shadow:0 10px 30px rgba(0,0,0,.10)}
+.ljour-tiles{display:flex;margin-bottom:16px}
+.ljour-tiles img{width:64px;height:64px;border-radius:18px;object-fit:cover;position:relative;box-shadow:0 6px 18px rgba(0,0,0,.22);border:2px solid var(--scard)}
+.ljour-tiles img+img{margin-left:-22px}
+.ljour-n{font-size:12px;font-weight:800;letter-spacing:1.4px;color:var(--sbrand)}
+.ljour-t{font-size:18px;font-weight:800;letter-spacing:-.3px;margin:5px 0 8px;line-height:1.2}
+.ljour-d{font-size:13.5px;line-height:1.55;color:var(--stx2)}
+@media (max-width:1000px){.ljour-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:620px){.ljour-grid{grid-template-columns:1fr}.ljour-wrap{padding-top:44px}}

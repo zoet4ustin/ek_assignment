@@ -1,5 +1,29 @@
 import { View, Theme } from '../Site'
 import { Nav, Footer } from './SiteChrome'
+import { tileSrc } from '../data'
+
+const JOURNEY = [
+  {
+    n: '01', t: 'Land on the collage',
+    d: 'No account wall, no permission prompt, no three-slide value pitch. The first screen is the product showing what it has.',
+    tiles: ['fashion', 'beauty', 'grocery'],
+  },
+  {
+    n: '02', t: 'Who is on the other end?',
+    d: 'Channel and reach, two taps. Audience rather than personal taste, because a homemaker sharing into a family group is not shopping for herself.',
+    tiles: ['mobiles', 'travel', 'fitness'],
+  },
+  {
+    n: '03', t: 'Follow what they buy',
+    d: 'Twelve category tiles, bundled with the app so the grid paints on the first frame. Follow three and the feed is set.',
+    tiles: ['home', 'kitchen', 'baby'],
+  },
+  {
+    n: '04', t: 'A feed built to match',
+    d: 'The segment is inferred from a transparent additive model, shown with the scores behind it and an override. Then the journey runs as before.',
+    tiles: ['electronics', 'accessories', 'footwear'],
+  },
+]
 
 const SEGMENTS = [
   { img: 's1.png', n: 'The Broadcaster', d: '30–100 deals a day to a channel', g: 'linear-gradient(160deg,#0f766e,#0b3a36)' },
@@ -10,7 +34,7 @@ const SEGMENTS = [
 ]
 
 const PROTOS: { v: View; n: string; t: string; tag: string; d: string; a: string }[] = [
-  { v: 'q1', n: '01', t: 'Segmentation & Personalization', tag: 'Answers Q1', d: 'One adaptive app for five creator types — no labels. Switch cohorts and watch the whole app change.', a: '#0FB5A6' },
+  { v: 'q1', n: '01', t: 'Segmentation & Personalization', tag: 'Answers Q1', d: 'Cold-start onboarding infers your segment from audience and followed categories, then one adaptive app serves five creator types — no labels.', a: '#0FB5A6' },
   { v: 'q2', n: '02', t: 'The Instagram Creator Suite', tag: 'Answers Q2', d: 'From a deal to a posted Reel with the funnel armed — Reel Maker, Auto DM, Storefront.', a: '#C2456A' },
   { v: 'calc', n: '03', t: 'Pricing & Unit Economics', tag: 'Q2 · financial model', d: 'Two sliders reprice Creator Pro live against the ₹7,850 do-it-yourself stack.', a: '#B07A12' },
   { v: 'journey', n: '04', t: 'The Combined Journey', tag: 'Q1 + Q2', d: 'Discovered, personalized and monetized across the whole experience — one story.', a: '#2F6FB0' },
@@ -37,6 +61,31 @@ export default function Landing({ go, theme, setTheme }: { go: (v: View) => void
               <img src={`/segments/${s.img}`} alt={s.n} onError={hide} />
               <span className="lseg3-chip">● {s.n}</span>
               <div className="lseg3-cap">{s.d}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="ljour-wrap">
+        <div className="lproto-head">
+          <div className="lsec-kick">● The creator journey</div>
+          <div className="lproto-title">Cold start, in four screens</div>
+          <p className="lproto-sub">
+            Personalization has to start before there is any behaviour to personalize on. This is how the
+            first ninety seconds work, and why each question is the one being asked.
+          </p>
+        </div>
+        <div className="ljour-grid">
+          {JOURNEY.map(j => (
+            <div className="ljour" key={j.n}>
+              <div className="ljour-tiles">
+                {j.tiles.map((t, i) => (
+                  <img key={t} src={tileSrc(t)} alt="" width={64} height={64} style={{ zIndex: 3 - i }} />
+                ))}
+              </div>
+              <div className="ljour-n">{j.n}</div>
+              <div className="ljour-t">{j.t}</div>
+              <div className="ljour-d">{j.d}</div>
             </div>
           ))}
         </div>

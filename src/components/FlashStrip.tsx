@@ -22,7 +22,7 @@ export default function FlashStrip() {
       {FLASH.map((f, i) => (
         <div className="flash-c" key={i}>
           <div className="flash-img">
-            <img src={aiImg(f.img, f.seed, IMG.flash[0], IMG.flash[1])} loading="lazy" decoding="async" style={{ opacity: 0, transition: 'opacity .45s ease' }} onLoad={e => ((e.currentTarget as HTMLImageElement).style.opacity = '1')} onError={e => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />
+            <img src={aiImg(f.img, f.seed, IMG.flash[0], IMG.flash[1])} loading="eager" decoding="async" style={{ opacity: 0, transition: 'opacity .45s ease' }} onLoad={e => ((e.currentTarget as HTMLImageElement).style.opacity = '1')} onError={e => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />
             <span className="flash-timer"><Ico name="clock" />{fmt(ends[i] - now)}</span>
           </div>
           <div className="flash-b">

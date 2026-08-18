@@ -1,5 +1,5 @@
 import { useApp } from '../AppContext'
-import { DEALS, PROFILES, CATEGORY_ICON, scoreDeal, aiImg, IMG, Deal, ProfileKey } from '../data'
+import { DEALS, PROFILES, CATEGORY_ICON, CAT_BY_KEY, scoreDeal, aiImg, IMG, Deal, ProfileKey } from '../data'
 import { Ico } from '../icons'
 import { ShareSheet, StoryCard, Broadcast } from './Overlays'
 import HeroCarousel from './HeroCarousel'
@@ -10,7 +10,8 @@ const NOTES = {
   top: { title: 'Top deals carousel', logic: 'Rotating hero promos surface the biggest live campaigns. Which promo leads is personalized by affinity — a homemaker sees beauty/grocery first, an influencer sees fashion.', segments: ['All segments'] },
   flash: { title: 'Flash deals + live countdown', logic: 'Time-boxed deals with a ticking timer create urgency and lift conversion. Most valuable to high-volume sharers, but shown to everyone.', segments: ['Broadcaster', 'Casual', 'All'] },
   tool: { title: 'Contextual tool (adapts)', logic: 'This block changes with inferred behaviour: a goal tracker for home earners, a story-card maker for influencers, a clicks dashboard for broadcasters, a referral card for casual sharers.', segments: ['Adapts per cohort'] },
-  feed: { title: 'Personalized “For you” feed', logic: 'Deals are ranked by your category affinity, learned from behaviour. Switch cohorts on the panel to watch the order change.', segments: ['All segments'] },
+  feed: { title: 'Personalized “For you” feed', logic: 'Two signals stacked: the categories you explicitly followed during onboarding rank first, the inferred segment’s affinity breaks ties underneath. Explicit beats inferred until real behaviour accumulates. Switch cohorts on the panel to watch the order change.', segments: ['All segments'] },
+  curated: { title: 'Curated header', logic: 'Closes the loop opened in onboarding. The user is told which segment was inferred and which categories are driving the order, so personalization is visible rather than mysterious, and the escape hatch stays one tap away.', segments: ['All segments'] },
 }
 
 function ContextualTool() {
@@ -68,7 +69,7 @@ function DealCard({ d, i }: { d: Deal; i: number }) {
     <div className="dcard">
       <div className="thumb">
         <span className="thumb-ic"><Ico name={CATEGORY_ICON[d.c] || 'cart'} /></span>
-        <img src={aiImg(d.img, d.seed, IMG.deal[0], IMG.deal[1])} loading="lazy" decoding="async" style={{ opacity: 0, transition: 'opacity .45s ease' }} onLoad={e => ((e.currentTarget as HTMLImageElement).style.opacity = '1')} onError={e => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />
+        <img src={aiImg(d.img, d.seed, IMG.deal[0], IMG.deal[1])} loading="eager" decoding="async" style={{ opacity: 0, transition: 'opacity .45s ease' }} onLoad={e => ((e.currentTarget as HTMLImageElement).style.opacity = '1')} onError={e => ((e.currentTarget as HTMLImageElement).style.display = 'none')} />
         {d.exp && <span className={'tag badge ' + ((d.exp === 'flash' || d.exp === '2h') ? 'b-warn' : 'b-suc')}>{d.exp === 'new' ? 'new' : d.exp}</span>}
         <span className="prof">{d.pr}% profit</span>
         {tool === 'bulk' && <div className={'chk' + (sel ? ' on' : '')} onClick={() => toggleSel(i)}><Ico name="check" /></div>}
@@ -95,20 +96,49 @@ export function BulkBar() {
   )
 }
 
-export default function Home() {
-  const { profile, cat, setCat } = useApp()
+function CuratedBar() {
+  const { profile, follows, overridden, setTab } = useApp()
   const p = PROFILES[profile as ProfileKey]
+  const named = follows.slice(0, 3).map(f => CAT_BY_KEY[f]?.label || f)
+  return (
+    <div className="curated">
+      <div className="curated-h">
+        <span className="curated-k">
+          {overridden ? 'You set this' : 'Curated for'} · <b>{p.label}</b>
+        </span>
+        <button className="curated-edit" onClick={() => setTab('profile')}>Edit</button>
+      </div>
+      <div className="curated-s">
+        {follows.length
+          ? <>Ranking on {named.join(', ')}{follows.length > 3 ? ` +${follows.length - 3} more` : ''}</>
+          : <>No categories followed yet, showing the {p.label.toLowerCase()} default order</>}
+      </div>
+    </div>
+  )
+}
+
+export default function Home() {
+  const { profile, cat, setCat, follows } = useApp()
+  const p = PROFILES[profile as ProfileKey]
+
+  // Followed categories lead the rail, then whatever else the segment
+  // usually cares about. 'All' always stays first so the escape is obvious.
+  const rail = ['All', ...follows, ...p.cats.filter(c => c !== 'All' && !follows.includes(c))]
+    .filter((c, i, a) => a.indexOf(c) === i)
+
   const list = DEALS.map((d, i) => ({ d, i }))
     .filter(o => (cat === 'All' || cat === 'Trending') ? true : o.d.c === cat)
-    .sort((a, b) => scoreDeal(b.d, p) - scoreDeal(a.d, p))
+    .sort((a, b) => scoreDeal(b.d, p, follows) - scoreDeal(a.d, p, follows))
+
   return (
     <div className="screen">
+      <Noted note={NOTES.curated}><CuratedBar /></Noted>
       <Noted note={NOTES.top} event="promo_impression"><HeroCarousel /></Noted>
       <div className="catrail">
-        {p.cats.map(c => (
-          <div key={c} className={'cat' + (cat === c ? ' on' : '')} onClick={() => setCat(c)}>
+        {rail.map(c => (
+          <div key={c} className={'cat' + (cat === c ? ' on' : '') + (follows.includes(c) ? ' fol' : '')} onClick={() => setCat(c)}>
             <div className="cic"><Ico name={CATEGORY_ICON[c] || 'grid'} /></div>
-            <div className="cl">{c}</div>
+            <div className="cl">{CAT_BY_KEY[c]?.label || c}</div>
           </div>
         ))}
       </div>
