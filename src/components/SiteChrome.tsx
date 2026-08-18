@@ -27,12 +27,6 @@ export function Footer() {
         <div className="lfoot-sub">Product assignment · June 2026 · prepared by Agniv</div>
         <a className="lfoot-gh" href="https://github.com/zoet4ustin/ek_assignment" target="_blank" rel="noopener noreferrer">↗ github.com/zoet4ustin/ek_assignment</a>
       </div>
-      <div className="lfoot-links">
-        <div className="lfoot-ct">The written answers (PDF)</div>
-        <a href="/answers/Q1.pdf" download="Q1_EarnKaro.pdf">Q1 — Segmentation &amp; Personalization</a>
-        <a href="/answers/Q2.pdf" download="Q2_EarnKaro.pdf">Q2 — Instagram Creator Suite</a>
-        <a href="/answers/Combined.pdf" download="EarnKaro_PM_Assignment.pdf">Combined (Q1 + Q2)</a>
-      </div>
       <div className="lfoot-r">
         <div className="lfoot-note"><b>Independent candidate assignment.</b> Not affiliated with or endorsed by EarnKaro. Brands, logos and screenshots are illustrative, and Instagram is simulated.</div>
       </div>

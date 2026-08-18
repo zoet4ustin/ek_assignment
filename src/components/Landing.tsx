@@ -49,7 +49,7 @@ export default function Landing({ go, theme, setTheme }: { go: (v: View) => void
       <section className="lhero3">
         <span className="lhero3-badge">● EarnKaro · Product Assignment</span>
         <h1 className="lhero3-h">Built for every kind of <span className="accent">creator</span>.</h1>
-        <p className="lhero3-p">Two interactive parts — segmentation &amp; personalization, and an Instagram creator suite. Pick a way in below; the written answers are in the footer.</p>
+        <p className="lhero3-p">Two interactive parts. Segmentation and personalization, and an Instagram creator suite. Pick a way in below.</p>
         <a className="lbtn p" href="#proto">Explore the prototypes ↓</a>
       </section>
 
@@ -95,7 +95,7 @@ export default function Landing({ go, theme, setTheme }: { go: (v: View) => void
         <div className="lproto-head">
           <div className="lsec-kick">● Explore — my answers to the assignment</div>
           <div className="lproto-title">Four ways in</div>
-          <p className="lproto-sub">Each card is an <b>interactive answer</b> to the questions shared. Click to explore the working prototype; the full <b>written answers (Q1 &amp; Q2)</b> are attached to the email and linked in the footer.</p>
+          <p className="lproto-sub">Each card is an <b>interactive answer</b> to the questions shared. Click to explore the working prototype. The full <b>written answers (Q1 &amp; Q2)</b> are attached to the email.</p>
         </div>
         <div className="lproto-grid">
           {PROTOS.map(c => (

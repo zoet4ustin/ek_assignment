@@ -103,7 +103,7 @@
 .lcta-t{font-size:24px;font-weight:800;letter-spacing:-.5px}
 .lcta .lbtn.p{color:#04201e}
 /* footer (colourful, branded) */
-.lfoot{margin-top:52px;background:linear-gradient(130deg,#0f766e 0%,#0b3a36 100%);border:none;border-radius:22px;padding:30px;display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:24px;color:#fff;box-shadow:0 22px 55px rgba(11,58,54,.32)}
+.lfoot{margin-top:52px;background:linear-gradient(130deg,#0f766e 0%,#0b3a36 100%);border:none;border-radius:22px;padding:30px;display:grid;grid-template-columns:1fr 1.3fr;gap:32px;color:#fff;align-items:start;box-shadow:0 22px 55px rgba(11,58,54,.32)}
 @media(max-width:760px){.lfoot{grid-template-columns:1fr;gap:20px}}
 .lfoot .lnav-logo{color:#fff}.lfoot .lnav-logo b{color:#5EEAD4}.lfoot .lnav-logo sup{color:#9FE1CB}
 .lfoot-sub{font-size:12.5px;color:rgba(255,255,255,.72);margin-top:6px}
