@@ -1,8 +1,10 @@
 import { View } from '../Site'
 
 const STEPS = [
-  { q: 'Q1', t: 'Discovered, not asked', d: 'She connects Instagram; the engine infers her niche and surfaces Creator Studio — no “what type are you?”.' },
-  { q: 'Q1', t: 'A feed that fits', d: 'Her home re-ranks to fashion & beauty. Rohit the broadcaster sees a different app — same front door.' },
+  { q: 'Q1', t: 'Asked about her audience, not her identity', d: 'Two taps — where she shares, and how many people see it. Never “what type of creator are you?”, because nobody knows the answer on day one.' },
+  { q: 'Q1', t: 'She follows what they buy', d: 'A grid of twelve category tiles; she picks four. An explicit, revocable signal that exists before any behaviour does.' },
+  { q: 'Q1', t: 'The app names its guess — and lets her correct it', d: 'Influencer, with the runner-up scores shown and one tap to override. Her home rebuilds around the tiles she followed. Rohit the broadcaster answers differently and gets a different app — same front door.' },
+  { q: 'Q2', t: 'The nudge is earned', d: 'She said Instagram in step one, so Creator Studio surfaces on her home. The same tiles sit inside the Studio, editable, seeding which deals it leads with.' },
   { q: 'Q2', t: 'One-tap content', d: 'Opens a ₹4,999 dress → Make a Reel. Script, voice and a 9:16 cut from real product images in ~40s.' },
   { q: 'Q2', t: 'The funnel arms itself', d: 'She posts. The caption says “comment LINK” and the Auto DM is already armed to that deal — zero setup.' },
   { q: 'Q2', t: 'Comments become clicks', d: 'A “size M?” comment → a private-reply DM with the tracked link, the right size, and two related deals.' },

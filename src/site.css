@@ -444,3 +444,31 @@
 .ljour-d{font-size:13.5px;line-height:1.55;color:var(--stx2)}
 @media (max-width:1000px){.ljour-grid{grid-template-columns:1fr 1fr}}
 @media (max-width:620px){.ljour-grid{grid-template-columns:1fr}.ljour-wrap{padding-top:44px}}
+
+/* ============================================================
+   Q2 · continuity with the Q1 cold start
+   The curated header and the tile rail are the same idea as the
+   Q1 home, redrawn at the Q2 mock's smaller scale. The niche grid
+   is the Q1 collage, editable inside the Studio.
+   ============================================================ */
+.q2p-curated{border:1px solid var(--sln);border-radius:12px;padding:9px 11px;display:flex;flex-direction:column;gap:2px;background:rgba(127,127,127,.05)}
+.q2p-curatedh{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--stx2)}
+.q2p-curatedh b{color:var(--stx);font-weight:800}
+.q2p-curatede{font-size:11px;font-weight:800;color:var(--sbrand);cursor:pointer}
+.q2p-curateds{font-size:10px;color:var(--stx3)}
+
+.q2p-tilerail{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.q2p-tilerail::-webkit-scrollbar{display:none}
+.q2p-tr{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:46px}
+.q2p-tr img{width:42px;height:42px;border-radius:13px;object-fit:cover;display:block}
+.q2p-tr i{font-style:normal;font-size:9px;color:var(--stx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46px}
+.q2p-trall{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--sbrand);color:#04201e;font-size:10px;font-weight:800}
+.q2p-tr.all i{color:var(--stx)}
+
+.q2p-nichegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}
+.q2p-nt{position:relative;padding:0;border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:inherit}
+.q2p-nt img{width:100%;aspect-ratio:1;height:auto;border-radius:12px;object-fit:cover;display:block;opacity:.42;transition:opacity .16s,box-shadow .16s}
+.q2p-nt.on img{opacity:1;box-shadow:0 0 0 2px var(--sbrand)}
+.q2p-nt i{font-style:normal;font-size:9px;font-weight:600;color:var(--stx3)}
+.q2p-nt.on i{color:var(--stx)}
+.q2p-ntick{position:absolute;top:3px;right:3px;width:14px;height:14px;border-radius:50%;background:var(--sbrand);color:#04201e;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;line-height:1}

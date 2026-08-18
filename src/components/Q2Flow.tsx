@@ -1,4 +1,14 @@
 import { useState, useEffect } from 'react'
+import { CATEGORIES, CAT_BY_KEY, tileSrc } from '../data'
+
+// The eight tiles Aisha plausibly sees; the Q1 collage ships twelve, but the
+// Studio only needs enough to make the niche editable without stealing the
+// screen from the Reel Maker.
+const NICHE_TILES = CATEGORIES.filter(c =>
+  ['Fashion', 'Beauty', 'Accessories', 'Footwear', 'Home', 'Travel', 'Fitness', 'Mobiles'].includes(c.key))
+
+// What she followed at the end of the Q1 journey. Q2 opens where Q1 left off.
+const SEED_NICHE = ['Fashion', 'Beauty', 'Accessories', 'Footwear']
 
 type Deal = 'beauty' | 'dress'
 type Path = 'without' | 'with'
@@ -6,11 +16,13 @@ type Step = 'home' | 'suite' | 'identity' | 'path' | 'paywall' | 'payment' | 'ge
 
 const DEALS: Record<Deal, any> = {
   beauty: {
+    cat: 'Beauty',
     brand: 'Nykaa', name: 'Lip + skincare combo', price: '699', mrp: '1,199', pr: 18, emoji: '💄',
     without: '/video/beauty_without.mp4', with: '/video/beauty_with.mp4',
     cap: "My everyday lip + skincare combo is 18% off 💄 — soft, long-lasting, perfect for festive looks. Comment LINK for the deal. #ad",
   },
   dress: {
+    cat: 'Fashion',
     brand: 'Myntra', name: 'Floral summer dress', price: '4,999', mrp: '8,999', pr: 8, emoji: '👗',
     without: '/video/dress_without.mp4', with: '/video/dress_with.mp4',
     cap: "Found THE summer dress 🌸 under ₹5,000, down from ₹8,999. Comment LINK and I'll DM you the deal. #ad",
@@ -162,7 +174,17 @@ export default function Q2Flow() {
   const [miss, setMiss] = useState(false)
   const [arch, setArch] = useState(false)
   const [info, setInfo] = useState<null | 'pn' | 'edge'>(null)
+  // Carried over from the Q1 cold start, not invented here. Editing it
+  // re-ranks the Studio, so the two answers are visibly the same system.
+  const [niche, setNiche] = useState<string[]>(SEED_NICHE)
   const go = (s: Step) => { setStep(s); setDm(null); setMiss(false) }
+
+  const toggleNiche = (k: string) =>
+    setNiche(n => n.includes(k) ? n.filter(x => x !== k) : [...n, k])
+
+  // Followed category first, then the original order as the tiebreak.
+  const ordered = [...ORDER].sort((a, b) =>
+    (niche.includes(DEALS[b].cat) ? 1 : 0) - (niche.includes(DEALS[a].cat) ? 1 : 0))
 
   const d = DEALS[deal]
   const vid = path === 'without' ? d.without : d.with
@@ -182,8 +204,8 @@ export default function Q2Flow() {
   }
 
   const guide: Record<Step, { h: string; p: string; flow: any }> = {
-    home: { h: '1 · Discovery — where it begins', p: "This is Aisha's normal EarnKaro home (Q1). The question Q2 must answer is: how does she even find the creator tools? Answer — we nudge. The personalization engine knows she posts to Instagram, so it surfaces a Creator Studio banner here (and in her menu, and after she shares). Tap the glowing banner.", flow: <Flow title="How we nudge (entry points)" nodes={[{ t: 'Home banner — personalized', hl: true }, { t: 'Hamburger menu entry' }, { t: 'Nudge after she shares a deal' }, { t: 'First-week tip + email' }]} /> },
-    suite: { h: '2 · Creator Studio', p: 'A clear explainer, not a blank screen. The “above-and-beyond” bit sits up top: because she connected Instagram, the suite leads with deals matched to her niche — read from her own posts & hashtags via the Graph API, then ranked by what converts. It collapses “discovery” for the Influencer — the on-brand deals come to her.', flow: <Flow title="IG-matched recommendations" nodes={[{ t: 'Her own posts + hashtags', sub: 'Graph API · consented' }, { t: 'Classify niche → match catalog', hl: true }, { t: 'Rank by what converts' }, { t: 'Set up look · then Reel' }]} /> },
+    home: { h: '1 · Discovery — where it begins', p: "Aisha's home, exactly as the Q1 cold start left it: inferred Influencer, ranking on the tiles she followed. Q2 starts from that state rather than assuming it. The question Q2 must answer is how she finds the creator tools at all. Answer — we nudge, and the nudge is earned: she told us Instagram at signup. Tap the glowing banner.", flow: <Flow title="How we nudge (entry points)" nodes={[{ t: 'Q1 signal: channel = Instagram', sub: 'from the audience step', hl: true }, { t: 'Home banner — personalized' }, { t: 'Hamburger menu entry' }, { t: 'Nudge after she shares a deal' }]} /> },
+    suite: { h: '2 · Creator Studio', p: 'One niche, two sources. The tiles she followed in Q1 seed it on day one, before any Instagram connection exists; her own posts and hashtags then refine it via the Graph API, and conversion data re-ranks it. She can edit the tiles right here, and the deal list below re-ranks as she does — the same collage, doing the same job, in the other half of the product. It collapses discovery for the Influencer: the on-brand deals come to her.', flow: <Flow title="Where the niche comes from" nodes={[{ t: 'Followed tiles from Q1', sub: 'day-one seed, no data needed', hl: true }, { t: 'Her posts + hashtags', sub: 'Graph API · consented' }, { t: 'Rank by what converts' }, { t: 'Editable here — explicit wins' }]} /> },
     identity: { h: '3 · Set up your look (once)', p: 'This is where Aisha uploads her photo and records her voice — done once, reused on every "with you" reel. Decoupled from creation so making a reel is never slowed down. Consent is explicit (DPDP).', flow: <Flow title="Identity" nodes={[{ t: 'Upload photo' }, { t: 'Record 30s voice' }, { t: 'Consent + stored securely', hl: true }, { t: 'Reused on every reel' }]} /> },
     path: { h: '4 · With you, or product-only', p: 'Product-only is free. "With you" uses your saved look + voice — that\'s the Pro feature, because cloning is what costs us. The Nykaa + with-you reel is the showcase.', flow: <Flow title="Gating" nodes={[{ t: 'Without you — free' }, { t: 'With you — Pro', hl: true }]} /> },
     paywall: { h: '5 · Freemium → Pro', p: 'Free maximises GMV (commission pays for it); Pro covers the heavy compute. Cloned look, unlimited reels, intent Auto DM, premium storefront.', flow: <Flow title="Why a paywall here" nodes={[{ t: 'Templated reel ≈ ₹7' }, { t: 'Clone/generative ≫', warn: true }, { t: 'Pro ₹599 / credits', hl: true }]} /> },
@@ -207,8 +229,30 @@ export default function Q2Flow() {
         <div className="q2p-hd"><span style={{ fontSize: 15 }}>☰</span><span style={{ fontWeight: 800 }}>EARN<b>KARO</b></span><span style={{ fontSize: 13, color: '#9DB0AD' }}>⌕</span></div>
         <div className="q2p-bd">
           <div className="q2p-greet"><img src="/avatar/profile.png" className="q2p-av" /><div style={{ flex: 1 }}><div style={{ fontSize: 10, color: '#9DB0AD' }}>Welcome back</div><div style={{ fontWeight: 800 }}>Hi Aisha</div></div><div className="q2p-month"><div style={{ fontSize: 9, color: '#9DB0AD' }}>This month</div><b>₹12,400</b></div></div>
+          <div className="q2p-curated">
+            <div className="q2p-curatedh">
+              <span>Curated for · <b>Influencer</b></span>
+              <span className="q2p-curatede" onClick={() => setStep('suite')}>Edit</span>
+            </div>
+            <div className="q2p-curateds">
+              Ranking on {niche.slice(0, 3).map(k => CAT_BY_KEY[k]?.label || k).join(', ')}
+              {niche.length > 3 ? ` +${niche.length - 3} more` : ''}
+            </div>
+          </div>
           <div className="q2p-hero">Fashion Week drops · 12% profit</div>
-          <div className="q2p-cats"><span className="on">All</span><span>Fashion</span><span>Beauty</span><span>Home</span></div>
+          <div className="q2p-tilerail">
+            <div className="q2p-tr all"><span className="q2p-trall">All</span><i>All</i></div>
+            {niche.map(k => {
+              const c = CAT_BY_KEY[k]
+              if (!c) return null
+              return (
+                <div className="q2p-tr" key={k}>
+                  <img src={tileSrc(c.tile)} alt="" width={42} height={42} />
+                  <i>{c.label}</i>
+                </div>
+              )
+            })}
+          </div>
           <div className="q2p-coach">
             <div className="q2p-nudge ring" onClick={() => setStep('suite')}>
               <div style={{ fontSize: 22 }}>✨</div>
@@ -218,7 +262,7 @@ export default function Q2Flow() {
             <div className="q2p-coachlbl">↑ tap to open · we surfaced this because you post to Instagram</div>
           </div>
           <div className="q2p-h" style={{ fontSize: 14 }}>For you</div>
-          {ORDER.map(k => (
+          {ordered.map(k => (
             <div key={k} className="q2p-deal" onClick={() => setStep('suite')}>
               <div className="q2p-dthumb">{DEALS[k].emoji}</div>
               <div style={{ flex: 1 }}><div className="q2p-dn">{DEALS[k].brand} · {DEALS[k].name}</div><div className="q2p-dmeta">₹{DEALS[k].price} <s>₹{DEALS[k].mrp}</s> · {DEALS[k].pr}%</div></div>
@@ -232,10 +276,29 @@ export default function Q2Flow() {
         <div className="q2p-bd">
           <div className="q2p-h">Creator Studio ✨</div>
           <div className="q2p-recobanner">
-            <div className="q2p-recohd"><span>● Matched to your Instagram</span><span className="q2p-recotag">fashion &amp; beauty</span></div>
-            <div className="q2p-recowhy2">Picks from <b>your</b> posts &amp; hashtags — tap one to make a Reel.</div>
+            <div className="q2p-recohd">
+              <span>● Your niche</span>
+              <span className="q2p-recotag">{niche.length} followed</span>
+            </div>
+            <div className="q2p-recowhy2">
+              Seeded by what you followed at signup, refined by what you actually post
+              (<b>Graph API</b>, consented). Tap to adjust — the picks below re-rank.
+            </div>
+            <div className="q2p-nichegrid">
+              {NICHE_TILES.map(c => {
+                const on = niche.includes(c.key)
+                return (
+                  <button key={c.key} className={'q2p-nt' + (on ? ' on' : '')}
+                    onClick={() => toggleNiche(c.key)} aria-pressed={on}>
+                    <img src={tileSrc(c.tile)} alt="" width={46} height={46} />
+                    <i>{c.label}</i>
+                    {on && <span className="q2p-ntick">✓</span>}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-          {ORDER.map((k, i) => (
+          {ordered.map((k, i) => (
             <div key={k} className={'q2p-deal' + (i === 0 ? ' feat' : '')} onClick={() => { setDeal(k); setStep('path') }}>
               <div className="q2p-dthumb">{DEALS[k].emoji}</div>
               <div style={{ flex: 1 }}><div className="q2p-dn">{DEALS[k].brand} · {DEALS[k].name}{i === 0 && <span className="q2p-freeb">TOP MATCH</span>}</div><div className="q2p-dmeta">₹{DEALS[k].price} <s>₹{DEALS[k].mrp}</s> · {DEALS[k].pr}%</div></div>
